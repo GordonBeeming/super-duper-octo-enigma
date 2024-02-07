@@ -1,20 +1,158 @@
 ﻿@page "/counter"
 @rendermode InteractiveServer
+@inject IJSRuntime jsRuntime
+
+
+@using BlazorMonaco
+@using BlazorMonaco.Editor
+@using BlazorMonaco.Languages
+@using Environment = System.Environment
 
 <PageTitle>Counter</PageTitle>
 
-<h1>Counter</h1>
+<h1>Editor</h1>
 
-<p role="status">Current count: @currentCount</p>
-
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<StandaloneCodeEditor @ref="_editor" Id="my-editor-instance-id" ConstructionOptions="EditorConstructionOptions" />
 
 @code {
-    private int currentCount = 0;
+    private StandaloneCodeEditor _editor = null!;
 
-    private void IncrementCount()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        currentCount++;
+        await RegisterCompletionItemProvider();
     }
+
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "csharp",
+            Value = string.Empty,
+        };
+    }
+
+    private async Task RegisterCompletionItemProvider()
+    {
+        // Register completion item to replace warning item
+        await BlazorMonaco.Languages.Global.RegisterCompletionItemProvider(jsRuntime, "csharp", (modelUri, position, context) =>
+        {
+            context.TriggerKind = CompletionTriggerKind.TriggerCharacter;
+            context.TriggerCharacter = ".";
+//FundDetails.IsGstRegistered = AbnLookup.IsGstRegistered
+            if (position.Column >= 41)
+            {
+                var completionList = new CompletionList()
+                {
+                    Suggestions = new List<CompletionItem>
+                    {
+                        new CompletionItem
+                        {
+                            LabelAsString = "Function: IsGstRegistered",
+                            Kind = CompletionItemKind.Property,
+                            InsertText = "IsGstRegistered",
+                            Preselect = true,
+                            DocumentationAsObject = new MarkdownString()
+                            {
+                                Value = @"
+# Function: IsGstRegistered
+Some other info
+                                        "
+                            },
+                            LabelAsObject = new CompletionItemLabel() { Label = "IsGstRegistered" },
+                        },
+                    },
+                };
+                return completionList;
+            }
+            if (position.Column >= 28)
+            {
+                var completionList = new CompletionList()
+                {
+                    Suggestions = new List<CompletionItem>
+                    {
+                        new CompletionItem
+                        {
+                            LabelAsString = "Function: AbnLookup",
+                            Kind = CompletionItemKind.Class,
+                            InsertText = "AbnLookup",
+                            Preselect = true,
+                            DocumentationAsObject = new MarkdownString()
+                            {
+                                Value = @"
+# Function: AbnLookup
+Some other info
+                                        "
+                            },
+                            LabelAsObject = new CompletionItemLabel() { Label = "AbnLookup" },
+                        },
+                    },
+                };
+                return completionList;
+            } 
+            if (position.Column >= 12)
+            {
+                var completionList = new CompletionList()
+                {
+                    Suggestions = new List<CompletionItem>
+                    {
+                        new CompletionItem
+                        {
+                            LabelAsString = "Property: IsGstRegistered",
+                            Kind = CompletionItemKind.Property,
+                            InsertText = "IsGstRegistered",
+                            Preselect = true,
+                            DocumentationAsObject = new MarkdownString()
+                            {
+                                Value = @"
+# Property: IsGstRegistered
+Some other info
+                                        "
+                            },
+                            LabelAsObject = new CompletionItemLabel() { Label = "IsGstRegistered" },
+                        },
+                    },
+                };
+                return completionList;
+            }
+            else
+            {
+                var completionList = new CompletionList()
+                {
+                    Suggestions = new List<CompletionItem>
+                    {
+                        new CompletionItem
+                        {
+                            LabelAsString = "Dataset: FundDetails",
+                            Kind = CompletionItemKind.Class,
+                            InsertText = "FundDetails",
+                            Preselect = true,
+                            DocumentationAsObject = new MarkdownString()
+                            {
+                                Value = @"
+# Dataset: FundDetails
+Some other info
+                                        "
+                            },
+                            LabelAsObject = new CompletionItemLabel() { Label = "FundDetails" },
+                        },
+                    },
+                };
+                return completionList;
+            }
+        });
+    }
+    //
+    // private void Callback(KeyboardEvent obj)
+    // {
+    //     if (obj.KeyCode == KeyCode.Enter)
+    //     {
+    //         Task.Run(async () =>
+    //         {
+    //             var value = await _editor.GetValue();
+    //             await _editor.SetValue(value.Replace(Environment.NewLine,string.Empty));
+    //         });
+    //         
+    //     }
+    // }
 
 }
