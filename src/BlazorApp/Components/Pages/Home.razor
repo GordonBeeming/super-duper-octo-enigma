@@ -1,7 +1,148 @@
 ﻿@page "/"
 
+@rendermode InteractiveServer
+
+@using Blazor.Diagrams;
+@using Blazor.Diagrams.Core.PathGenerators;
+@using Blazor.Diagrams.Core.Routers;
+@using Blazor.Diagrams.Options;
+@using Blazor.Diagrams.Models;
+@using Blazor.Diagrams.Core.Geometry;
+@using Blazor.Diagrams.Core.Anchors;
+@using Blazor.Diagrams.Core.Models;
+@using Blazor.Diagrams.Components;
+
+@inject ILogger<Index> Logger
+
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Quesion Validation Builder</h1>
 
-Welcome to your new app.
+<div class="diagram-container">
+    <CascadingValue Value="Diagram" IsFixed="true">
+        <DiagramCanvas></DiagramCanvas>
+    </CascadingValue>
+</div>
+
+
+<div>
+
+</div>
+
+@code
+{
+    private Blazor.Diagrams.BlazorDiagram Diagram { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        var options = new BlazorDiagramOptions
+        {
+            AllowMultiSelection = true,
+            Zoom =
+            {
+                Enabled = false,
+            },
+            Links =
+            {
+                DefaultRouter = new NormalRouter(),
+                DefaultPathGenerator = new SmoothPathGenerator()
+            },
+        };
+
+        Diagram = new Blazor.Diagrams.BlazorDiagram(options);
+
+        var firstNode = Diagram.Nodes.Add(new Blazor.Diagrams.Core.Models.NodeModel(position: new Point(100, 50))
+        {
+            Title = "Node 1"
+        });
+        var secondNode = Diagram.Nodes.Add(new Blazor.Diagrams.Core.Models.NodeModel(position: new Point(300, 50))
+        {
+            Title = "Node 2"
+        });
+
+        var thirdNode = Diagram.Nodes.Add(new Blazor.Diagrams.Core.Models.NodeModel(position: new Point(500, 50))
+        {
+            Title = "Node 3"
+        });
+
+        var fourthNode = Diagram.Nodes.Add(new Blazor.Diagrams.Core.Models.NodeModel(position: new Point(500, 200))
+        {
+            Title = "Node 4"
+        });
+
+        var fifthNode = Diagram.Nodes.Add(new Blazor.Diagrams.Core.Models.NodeModel(position: new Point(700, 50))
+        {
+            Title = "Node 5"
+        });
+
+        var firstRightPort = firstNode.AddPort(Blazor.Diagrams.Core.Models.PortAlignment.Right);
+
+        var secondLeftPort = secondNode.AddPort(Blazor.Diagrams.Core.Models.PortAlignment.Left);
+        var secondRightPort = secondNode.AddPort(Blazor.Diagrams.Core.Models.PortAlignment.Right);
+
+        var thirdLeftPort = thirdNode.AddPort(Blazor.Diagrams.Core.Models.PortAlignment.Left);
+        var thirdRightPort = thirdNode.AddPort(Blazor.Diagrams.Core.Models.PortAlignment.Right);
+
+        var fourthLeftPort = fourthNode.AddPort(Blazor.Diagrams.Core.Models.PortAlignment.Left);
+        var fourthRightPort = fourthNode.AddPort(Blazor.Diagrams.Core.Models.PortAlignment.Right);
+
+        var fifthLeftPort = fifthNode.AddPort(Blazor.Diagrams.Core.Models.PortAlignment.Left);
+
+        var link1 = Diagram.Links.Add(new LinkModel(new SinglePortAnchor(firstRightPort), new SinglePortAnchor(secondLeftPort)));
+        var link2 = Diagram.Links.Add(new LinkModel(new SinglePortAnchor(secondRightPort), new SinglePortAnchor(thirdLeftPort)));
+        var link3 = Diagram.Links.Add(new LinkModel(new SinglePortAnchor(secondRightPort), new SinglePortAnchor(fourthLeftPort)));
+        var link4 = Diagram.Links.Add(new LinkModel(new SinglePortAnchor(thirdRightPort), new SinglePortAnchor(fifthLeftPort)));
+        var link5 = Diagram.Links.Add(new LinkModel(new SinglePortAnchor(fourthRightPort), new SinglePortAnchor(fifthLeftPort)));
+
+        Diagram.SelectionChanged += (model) =>
+        {
+            if(model.Selected)
+            {
+                Logger.LogInformation("--------------------------------");
+                var selectedNode = Diagram.Nodes.FirstOrDefault(x => x.Id == model.Id);
+                if(selectedNode != null)
+                {
+                    Logger.LogInformation($"Selected Node Id: {model.Id} - {selectedNode.Title}");
+                    InspectNode(selectedNode, 1);
+                }
+            }
+        };
+
+    }
+
+    protected void InspectNode(NodeModel node, int depth)
+    {
+        foreach(var port in node.Ports)
+        {
+            if(port.Alignment == PortAlignment.Left)
+            {
+                foreach(var link in port.Links)
+                {
+                    var anchor = link.Source as SinglePortAnchor;
+                    if(anchor != null)
+                    {
+                        var parentNode = anchor?.Port.Parent;
+                        if(parentNode != null)
+                        {
+                            Logger.LogInformation($"{string.Empty.PadLeft(depth,'\t')}{node.Title} attached to: {parentNode.Title}");
+                            InspectNode(parentNode, depth + 1);
+                        }   
+                    }
+                }
+            }
+        }
+
+        // foreach(var link in Diagram.Links)
+        // {
+        //     if(link.Source.Id == node.Id)
+        //     {
+        //         var targetNode = Diagram.Nodes.FirstOrDefault(x => x.Id == link.Target.Id);
+        //         if(targetNode != null)
+        //         {
+        //             Logger.LogInformation($"Link: {link.Id} - {node.Title} -> {targetNode.Title}");
+        //             Walk(targetNode);
+        //         }
+        //     }
+        // }
+    }
+}
